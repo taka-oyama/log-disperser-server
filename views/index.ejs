@@ -19,7 +19,7 @@
       <div class="navbar-header">
         <a class="navbar-brand" href="#">Log Disperser</a>
       </div>
-      <ul class="nav navbar-nav">
+      <ul class="rooms nav navbar-nav">
         <% Object.keys(rooms).forEach(function(k) { %>
           <% if(k.indexOf("room:s:") >= 0) { %>
             <li class="room"><a href="#"><%= k.replace("room:s:", "") %></a></li>
@@ -43,6 +43,10 @@
     </tbody>
   </table>
 
+  <script type="text/template" id="room-tmpl">
+    <li class="room"><a href="#">{{ room }}</a></li>
+  </script>
+
   <script type="text/template" id="row-tmpl">
     <tr class="log-each {{ type.label }}">
       <td><span alt="{{ time.raw }}">{{ time.formatted }}</td>
@@ -60,7 +64,7 @@
     _.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
     var socket = io.connect('http://localhost:3030');
     var $table = $("#log-table tbody");
-    var tmpl = _.template($("#row-tmpl").html());
+    var rowTmpl = _.template($("#row-tmpl").html());
     var count = 0;
 
     // clicking on row toggles full message view
@@ -80,7 +84,12 @@
       return false;
     });
 
-    socket.on('connect', function (data) {
+    socket.on("connect", function (data) {
+      socket.on("created", function(data) {
+        var tmpl = _.template($("#room-tmpl").html());
+        $("#menu .rooms").append(tmpl(data));
+      });
+
       socket.on("logged", function(data) {
         var typeLabel = "default";
         switch(data.type) {
@@ -91,7 +100,7 @@
           case "log":       typeLabel = "default"; break;
         }
 
-        $table.prepend(tmpl({
+        $table.prepend(rowTmpl({
           room: data.room,
           uuid: data.uuid,
           time: {
