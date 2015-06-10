@@ -20,11 +20,6 @@
         <a class="navbar-brand" href="#">Log Disperser</a>
       </div>
       <ul class="rooms nav navbar-nav">
-        <% Object.keys(rooms).forEach(function(k) { %>
-          <% if(k.indexOf("room:s:") >= 0) { %>
-            <li class="room"><a href="#"><%= k.replace("room:s:", "") %></a></li>
-          <% } %>
-        <% }) %>
       </ul>
     </div>
   </nav>
@@ -44,7 +39,7 @@
   </table>
 
   <script type="text/template" id="room-tmpl">
-    <li class="room"><a href="#">{{ room }}</a></li>
+    <li class="room room-{{ room }}"><a href="#">{{ room }}</a></li>
   </script>
 
   <script type="text/template" id="row-tmpl">
@@ -65,13 +60,17 @@
     var socket = io.connect('http://localhost:3030');
     var $table = $("#log-table tbody");
     var rowTmpl = _.template($("#row-tmpl").html());
-    var count = 0;
 
-    // clicking on row toggles full message view
-    $("#log-table").on("click", ".log-each td", function(e) {
-      $(e.target).closest(".log-each").find("code").toggle();
+    // dynamically create rooms immediately
+    var $rooms = $("#menu .rooms");
+    var roomTmpl = _.template($("#room-tmpl").html());
+    (<%- JSON.stringify(Object.keys(roomIds)) %>).forEach(function(k) {
+      if(k.indexOf("room:s:") >= 0) {
+        $rooms.append(roomTmpl({ room: k.replace("room:s:", "") }));
+      }
     });
 
+    // clicking on the room enables logging
     $("#menu").on("click", ".room", function(e) {
       $("#menu .room.active a")
         .removeClass("active")
@@ -84,10 +83,17 @@
       return false;
     });
 
+    // clicking on row toggles full message view
+    $("#log-table").on("click", ".log-each td", function(e) {
+      $(e.target).closest(".log-each").find("code").toggle();
+    });
+
     socket.on("connect", function (data) {
       socket.on("created", function(data) {
-        var tmpl = _.template($("#room-tmpl").html());
-        $("#menu .rooms").append(tmpl(data));
+        if ($("#menu .room-" + data.room).length == 0) {
+          var roomTmpl = _.template($("#room-tmpl").html());
+          $("#menu .rooms").append(roomTmpl(data));
+        }
       });
 
       socket.on("logged", function(data) {

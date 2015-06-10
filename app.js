@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static('public'));
 app.get('/', function (req, res) {
-  res.render('index', { rooms: io.sockets.adapter.rooms });
+  res.render('index', { roomIds: io.sockets.adapter.rooms || [] });
 });
 
 // Socket.IO Stuff
