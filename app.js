@@ -1,3 +1,4 @@
+var port = 3030;
 var express = require('express');
 var app = express();
 var server = require('http').Server(app);
@@ -7,7 +8,7 @@ var sndPrefix = "room:s:";
 var recPrefix = "room:r:";
 
 // HTTP Stuff
-server.listen(3030);
+server.listen(port);
 app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static('public'));
@@ -21,7 +22,7 @@ io.on("connection", function (socket) {
     // create/join a room for sending logs
     var sRoom = sndPrefix + data.room;
     socket.join(sRoom);
-    console.log(socket.conn.id + " joined room: " + sRoom);
+    console.log(socket.id + " joined room: " + sRoom);
 
     // hook event for sending logs to viewers
     var rRoom = recPrefix + data.room;
@@ -41,18 +42,19 @@ io.on("connection", function (socket) {
 
   socket.on("join", function(data) {
     var rRoom = recPrefix + data.room;
-    console.log("joined: " + socket.conn.id + " => " + rRoom);
+    console.log("joined: " + socket.id + " => " + rRoom);
     socket.join(rRoom);
   });
 
   socket.on("leave", function(data) {
     var rRoom = recPrefix + data.room;
-    console.log("left: " + socket.conn.id + " => " + rRoom);
+    console.log("left: " + socket.id + " => " + rRoom);
     socket.leave(rRoom);
   });
 
   socket.on("disconnect", function () {
-    console.log(socket.rooms);
-    console.log("disconnected: " + socket.conn.id);
+    console.log("disconnected: " + socket.id);
   });
 });
+
+console.log("Server Started on http://localhost:" + port);
