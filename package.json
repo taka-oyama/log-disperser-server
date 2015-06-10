@@ -1,0 +1,22 @@
+{
+  "name": "log-disperser-server",
+  "version": "1.0.0",
+  "description": "Log Disperser Server",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Takayasu Oyama",
+  "license": "MIT",
+  "dependencies": {
+    "express": "~4.0",
+    "ejs": "*",
+    "socket.io": "~1.3.0",
+    "underscore": "*",
+    "colors": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
