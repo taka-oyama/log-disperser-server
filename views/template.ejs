@@ -1,0 +1,16 @@
+<script type="text/template" id="room-tmpl">
+  <li class="room room-{{ room }} {{ active ? 'active' : '' }}"><a href="#">{{ room }}</a></li>
+</script>
+
+<script type="text/template" id="row-tmpl">
+  <tr class="log-each {{ type.label }}">
+    <td><span alt="{{ time.raw }}">{{ time.formatted }}</td>
+    <td>{{ room }}</td>
+    <td>{{ uuid }}</td>
+    <td><span class="label label-{{ type.label }}">{{ type.name }}</span></td>
+    <td>
+      <code>{{ message.digest }}</code>
+      <code style="display: none;">{{ message.full }}</code>
+    </td>
+  </tr>
+</script>

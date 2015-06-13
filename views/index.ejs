@@ -7,6 +7,7 @@
   <script src="./js/underscore.min.js"></script>
   <script src="./js/moment.min.js"></script>
   <script src="./js/bootstrap.min.js"></script>
+  <script src="./js/init.js"></script>
   <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
   <style>
     #log-table { font-size: 11.5px; }
@@ -38,64 +39,70 @@
     </tbody>
   </table>
 
-  <script type="text/template" id="room-tmpl">
-    <li class="room room-{{ room }}"><a href="#">{{ room }}</a></li>
-  </script>
-
-  <script type="text/template" id="row-tmpl">
-    <tr class="log-each {{ type.label }}">
-      <td><span alt="{{ time.raw }}">{{ time.formatted }}</td>
-      <td>{{ room }}</td>
-      <td>{{ uuid }}</td>
-      <td><span class="label label-{{ type.label }}">{{ type.name }}</span></td>
-      <td>
-        <code>{{ message.digest }}</code>
-        <code style="display: none;">{{ message.full }}</code>
-      </td>
-    </tr>
-  </script>
+  <% include template.ejs %>
 
   <script>
-    _.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
-    var socket = io.connect('http://localhost:3030');
     var $table = $("#log-table tbody");
     var rowTmpl = _.template($("#row-tmpl").html());
 
     // dynamically create rooms immediately
     var $rooms = $("#menu .rooms");
     var roomTmpl = _.template($("#room-tmpl").html());
-    (<%- JSON.stringify(Object.keys(roomIds)) %>).forEach(function(k) {
-      if(k.indexOf("room:s:") >= 0) {
-        $rooms.append(roomTmpl({ room: k.replace("room:s:", "") }));
-      }
-    });
-
-    // clicking on the room enables logging
-    $("#menu").on("click", ".room", function(e) {
-      $("#menu .room.active a")
-        .removeClass("active")
-        .each(function(i, el) {
-          socket.emit("leave", { room: $(el).html() });
-        });
-      $table.empty();
-      $(e.currentTarget).addClass("active");
-      socket.emit("join", { room: $(e.target).html() });
-      return false;
-    });
 
     // clicking on row toggles full message view
     $("#log-table").on("click", ".log-each td", function(e) {
       $(e.target).closest(".log-each").find("code").toggle();
     });
 
-    socket.on("connect", function (data) {
+    // clicking on the room enables logging
+    $("#menu").on("click", ".room", function(e) {
+      $("#menu .room.active")
+        .removeClass("active")
+        .children("a")
+        .each(function(i, el) {
+          socket.emit("leave", { room: $(el).html() });
+        });
+      $table.empty();
+      $(e.currentTarget).addClass("active");
+      socket.emit("join", { room: $(e.target).html() }, function(datas) {
+        var roomTmpl = _.template($("#room-tmpl").html());
+        datas.forEach(function(data) {
+          var typeLabel = "default";
+          switch(data.type) {
+            case "exception": typeLabel = "danger"; break;
+            case "error":     typeLabel = "danger"; break;
+            case "assert":    typeLabel = "active"; break;
+            case "warn":      typeLabel = "warning"; break;
+            case "log":       typeLabel = "default"; break;
+          }
+          $table.prepend(rowTmpl({
+            room: data.room,
+            uuid: data.uuid,
+            time: {
+              raw: data.time,
+              formatted: moment(new Date(data.time)).format("HH:mm:ss.SSS")
+            },
+            type: {
+              name: data.type,
+              label: typeLabel,
+            },
+            message: {
+              digest: data.message.split("\n")[0],
+              full: data.message
+            }
+          }));
+        });
+      });
+      return false;
+    });
+
+    socket.once("connect", function (data) {
       socket.on("created", function(data) {
         if ($("#menu .room-" + data.room).length == 0) {
           var roomTmpl = _.template($("#room-tmpl").html());
-          $("#menu .rooms").append(roomTmpl(data));
+          $rooms.append(roomTmpl({ room: data.room, active: false }));
         }
       });
-
       socket.on("logged", function(data) {
         var typeLabel = "default";
         switch(data.type) {
@@ -122,6 +129,19 @@
             full: data.message
           }
         }));
+      });
+
+      socket.emit("join", { room: "all" }, function(data) {
+        var roomIds = <%- JSON.stringify(Object.keys(roomIds)) %>;
+        var filteredIds = [];
+        roomIds.forEach(function(roomId) {
+          if(roomId.indexOf("room:s:") >= 0) {
+            filteredIds.push(roomId.replace("room:s:", ""));
+          }
+        });
+        filteredIds.sort().forEach(function(k, i) {
+          $rooms.append(roomTmpl({ room: k, active: k == "all" }));
+        });
       });
     });
   </script>
