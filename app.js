@@ -55,6 +55,11 @@ io.on("connection", function (socket, connCallback) {
       io.emit("created", { room: rRoom.replace("room:r:", "") });
     }
 
+    socket.on("disconnect", function () {
+      io.to(rAllRoom).emit("disconnected", { room: sRoom });
+      console.log("disconnected: " + socket.id);
+    });
+
     // send ACK to client so it can start sending logs
     ackCallback();
   });
@@ -75,10 +80,6 @@ io.on("connection", function (socket, connCallback) {
     console.log("left: " + socket.id + " => " + rRoom);
     socket.leave(rRoom);
     socket.leave(rAllRoom);
-  });
-
-  socket.on("disconnect", function () {
-    console.log("disconnected: " + socket.id);
   });
 
   socket.join(rAllRoom);
