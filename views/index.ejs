@@ -48,62 +48,9 @@
     // dynamically create rooms immediately
     var $rooms = $("#menu .rooms");
     var roomTmpl = _.template($("#room-tmpl").html());
-
-    // clicking on row toggles full message view
-    $("#log-table").on("click", ".log-each td", function(e) {
-      $(e.target).closest(".log-each").find("code").toggle();
-    });
-
-    // clicking on the room enables logging
-    $("#menu").on("click", ".room", function(e) {
-      $("#menu .room.active")
-        .removeClass("active")
-        .children("a")
-        .each(function(i, el) {
-          socket.emit("leave", { room: $(el).html() });
-        });
-      $table.empty();
-      $(e.currentTarget).addClass("active");
-      socket.emit("join", { room: $(e.target).html() }, function(datas) {
-        var roomTmpl = _.template($("#room-tmpl").html());
-        datas.forEach(function(data) {
-          var typeLabel = "default";
-          switch(data.type) {
-            case "exception": typeLabel = "danger"; break;
-            case "error":     typeLabel = "danger"; break;
-            case "assert":    typeLabel = "active"; break;
-            case "warn":      typeLabel = "warning"; break;
-            case "log":       typeLabel = "default"; break;
-          }
-          $table.prepend(rowTmpl({
-            room: data.room,
-            uuid: data.uuid,
-            time: {
-              raw: data.time,
-              formatted: moment(new Date(data.time)).format("HH:mm:ss.SSS")
-            },
-            type: {
-              name: data.type,
-              label: typeLabel,
-            },
-            message: {
-              digest: data.message.split("\n")[0],
-              full: data.message
-            }
-          }));
-        });
-      });
-      return false;
-    });
-
-    socket.once("connect", function (data) {
-      socket.on("created", function(data) {
-        if ($("#menu .room-" + data.room).length == 0) {
-          var roomTmpl = _.template($("#room-tmpl").html());
-          $rooms.append(roomTmpl({ room: data.room, active: false }));
-        }
-      });
-      socket.on("logged", function(data) {
+    var appendLogData = function(dataList) {
+      var roomTmpl = _.template($("#room-tmpl").html());
+      dataList.forEach(function(data) {
         var typeLabel = "default";
         switch(data.type) {
           case "exception": typeLabel = "danger"; break;
@@ -112,7 +59,6 @@
           case "warn":      typeLabel = "warning"; break;
           case "log":       typeLabel = "default"; break;
         }
-
         $table.prepend(rowTmpl({
           room: data.room,
           uuid: data.uuid,
@@ -130,18 +76,51 @@
           }
         }));
       });
+    };
 
-      socket.emit("join", { room: "all" }, function(data) {
-        var roomIds = <%- JSON.stringify(Object.keys(roomIds)) %>;
+    // clicking on row toggles full message view
+    $("#log-table").on("click", ".log-each td", function(e) {
+      $(e.target).closest(".log-each").find("code").toggle();
+    });
+
+    // clicking on the room enables logging
+    $("#menu").on("click", ".room", function(e) {
+      $("#menu .room.active")
+        .removeClass("active")
+        .children("a")
+        .each(function(i, el) {
+          socket.emit("leave", { room: $(el).html() });
+        });
+      $table.empty();
+      $(e.currentTarget).addClass("active");
+      socket.emit("join", { room: $(e.target).html() }, appendLogData);
+      return false;
+    });
+
+    socket.once("connect", function (data) {
+      socket.on("created", function(data) {
+        if ($("#menu .room-" + data.room).length == 0) {
+          var roomTmpl = _.template($("#room-tmpl").html());
+          $rooms.append(roomTmpl({ room: data.room, active: false }));
+        }
+      });
+
+      socket.on("logged", function(data) {
+        appendLogData([data]);
+      });
+
+      socket.emit("join", { room: "all" }, function(dataList) {
+        var roomIds = <%- JSON.stringify(_.union(roomIds.concat(["room:r:all"]))) %>;
         var filteredIds = [];
         roomIds.forEach(function(roomId) {
-          if(roomId.indexOf("room:s:") >= 0) {
-            filteredIds.push(roomId.replace("room:s:", ""));
+          if(roomId.indexOf("room:r:") >= 0) {
+            filteredIds.push(roomId.replace("room:r:", ""));
           }
         });
         filteredIds.sort().forEach(function(k, i) {
           $rooms.append(roomTmpl({ room: k, active: k == "all" }));
         });
+        appendLogData(dataList);
       });
     });
   </script>
