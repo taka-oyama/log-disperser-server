@@ -12,15 +12,17 @@ var recievers = LogReceiver.rooms;
 
 // HTTP Stuff
 server.listen(port);
-app.locals._ = require('underscore');
+app.locals._ = _;
 app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static('public'));
 app.get('/', function (req, res) {
   var roomIds = Object.keys(io.sockets.adapter.rooms);
-  var rRoomIds = _.filter(roomIds, function(id) { return id.indexOf(LogReceiver.prefix) >= 0; });
-  var rooms = _.map(rRoomIds, function(id) { return id.replace("room:r:", ""); }).concat("all");
-  res.render('index', { rooms: _.uniq(rooms) || [] });
+  var rooms =  _.chain(roomIds.concat(LogReceiver.prefix + "all"))
+    .filter(function(id) { return id.indexOf(LogReceiver.prefix) >= 0; })
+    .map(function(id) { return id.replace("room:r:", ""); })
+    .uniq().value();
+  res.render('index', { rooms: rooms });
 });
 
 // Socket.IO Stuff
