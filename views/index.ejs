@@ -110,14 +110,7 @@
       });
 
       socket.emit("join", { room: "all" }, function(dataList) {
-        var roomIds = <%- JSON.stringify(_.union(roomIds.concat(["room:r:all"]))) %>;
-        var filteredIds = [];
-        roomIds.forEach(function(roomId) {
-          if(roomId.indexOf("room:r:") >= 0) {
-            filteredIds.push(roomId.replace("room:r:", ""));
-          }
-        });
-        filteredIds.sort().forEach(function(k, i) {
+        <%- JSON.stringify(rooms) %>.sort().forEach(function(k, i) {
           $rooms.append(roomTmpl({ room: k, active: k == "all" }));
         });
         appendLogData(dataList);
