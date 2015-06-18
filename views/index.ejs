@@ -22,6 +22,9 @@
       </div>
       <ul class="rooms nav navbar-nav">
       </ul>
+      <form class="clear navbar-form navbar-right" role="search">
+        <button type="submit" class="btn btn-danger">Clear</button>
+      </form>
     </div>
   </nav>
 
@@ -43,10 +46,9 @@
 
   <script>
     var $table = $("#log-table tbody");
-    var rowTmpl = _.template($("#row-tmpl").html());
-
-    // dynamically create rooms immediately
     var $rooms = $("#menu .rooms");
+    var $clear = $("#menu .clear");
+    var rowTmpl = _.template($("#row-tmpl").html());
     var roomTmpl = _.template($("#room-tmpl").html());
     var appendLogData = function(dataList) {
       var roomTmpl = _.template($("#room-tmpl").html());
@@ -55,7 +57,6 @@
         switch(data.type) {
           case "exception": typeLabel = "danger"; break;
           case "error":     typeLabel = "danger"; break;
-          case "assert":    typeLabel = "active"; break;
           case "warn":      typeLabel = "warning"; break;
           case "log":       typeLabel = "default"; break;
         }
@@ -79,13 +80,13 @@
     };
 
     // clicking on row toggles full message view
-    $("#log-table").on("click", ".log-each td", function(e) {
+    $table.on("click", ".log-each td", function(e) {
       $(e.target).closest(".log-each").find("code").toggle();
     });
 
     // clicking on the room enables logging
-    $("#menu").on("click", ".room", function(e) {
-      $("#menu .room.active")
+    $rooms.on("click", ".room", function(e) {
+      $rooms.children(".active")
         .removeClass("active")
         .children("a")
         .each(function(i, el) {
@@ -94,6 +95,11 @@
       $table.empty();
       $(e.currentTarget).addClass("active");
       socket.emit("join", { room: $(e.target).html() }, appendLogData);
+      return false;
+    });
+
+    $clear.on("click", function(e) {
+      socket.emit("clear");
       return false;
     });
 
@@ -114,6 +120,10 @@
           $rooms.append(roomTmpl({ room: k, active: k == "all" }));
         });
         appendLogData(dataList);
+      });
+
+      socket.on("clear", function() {
+        $table.empty();
       });
     });
   </script>

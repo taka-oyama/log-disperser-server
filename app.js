@@ -40,6 +40,13 @@ io.on("connection", function (socket, connCallback) {
       recievers[data.room].leave();
     }
   });
+
+  socket.on("clear", function(data) {
+    LogSender.rooms = {};
+    LogSender.roomHistories = {};
+    io.to(LogReceiver.prefix + "all").emit("clear");
+    console.log("clearing logs for all");
+  });
 });
 
 console.log("Server Started on http://localhost:" + port);
