@@ -5,8 +5,8 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server, { pingInterval: 10000 });
 var port = 3030;
 
-var LogReceiver = require('./log_receiver');
-var LogSender = require('./log_sender');
+var LogReceiver = require('./models/log_receiver');
+var LogSender = require('./models/log_sender');
 var senders = LogSender.rooms;
 var recievers = LogReceiver.rooms;
 
