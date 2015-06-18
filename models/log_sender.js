@@ -19,15 +19,15 @@ function LogSender(socket, roomName) {
     socket.server.emit("created", { room: roomName });
   }
 
-  // hook event for sending logs to viewers
-  socket.on("log", function(data) { self.emitLog(data); });
-
   // add instance to rooms
   LogSender.rooms[roomName] = this;
 
   if(!LogSender.roomHistories[roomName]) {
     LogSender.roomHistories[roomName] = [];
   }
+
+  // hook event for sending logs to viewers
+  socket.on("log", function(data) { self.emitLog(data); });
 
   console.log(socket.id + " joined room: " + this.sRoomId);
 };
