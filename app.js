@@ -7,8 +7,6 @@ var port = 3030;
 
 var LogReceiver = require('./models/log_receiver');
 var LogSender = require('./models/log_sender');
-var senders = LogSender.rooms;
-var recievers = LogReceiver.rooms;
 
 // HTTP Stuff
 server.listen(port);
@@ -32,18 +30,19 @@ io.on("connection", function (socket, connCallback) {
 
   socket.on("join", function(data, ackCallback) {
     LogReceiver.create(socket, data.room);
-    ackCallback(senders[data.room] ? senders[data.room].roomHistory() : []);
+    ackCallback(LogSender.roomHistories[data.room] || []);
   });
 
   socket.on("leave", function(data) {
-    if(recievers[data.room]) {
-      recievers[data.room].leave();
+    if(LogReceiver.rooms[data.room]) {
+      LogReceiver.rooms[data.room].leave();
     }
   });
 
   socket.on("clear", function(data) {
-    LogSender.rooms = {};
-    LogSender.roomHistories = {};
+    for(var key in LogSender.roomHistories) {
+      LogSender.roomHistories[key] = [];
+    }
     io.to(LogReceiver.prefix + "all").emit("clear");
     console.log("clearing logs for all");
   });
