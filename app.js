@@ -2,7 +2,7 @@ var _ = require('underscore');
 var express = require('express');
 var app = express();
 var server = require('http').Server(app);
-var io = require('socket.io')(server, { pingInterval: 100000000 });
+var io = require('socket.io')(server, { pingInterval: 10000 });
 var port = 3030;
 
 var LogReceiver = require('./log_receiver');
