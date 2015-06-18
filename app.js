@@ -17,12 +17,9 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static('public'));
 app.get('/', function (req, res) {
-  var roomIds = Object.keys(io.sockets.adapter.rooms);
-  var rooms =  _.chain(roomIds.concat(LogReceiver.prefix + "all"))
-    .filter(function(id) { return id.indexOf(LogReceiver.prefix) >= 0; })
-    .map(function(id) { return id.replace("room:r:", ""); })
-    .uniq().value();
-  res.render('index', { rooms: rooms });
+  res.render('index', {
+    rooms: _.uniq(Object.keys(LogSender.roomHistories).concat("all"))
+  });
 });
 
 // Socket.IO Stuff
@@ -35,7 +32,7 @@ io.on("connection", function (socket, connCallback) {
 
   socket.on("join", function(data, ackCallback) {
     LogReceiver.create(socket, data.room);
-    ackCallback(senders[data.room] ? senders[data.room].history : []);
+    ackCallback(senders[data.room] ? senders[data.room].roomHistory() : []);
   });
 
   socket.on("leave", function(data) {
