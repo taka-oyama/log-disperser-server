@@ -1,2 +1,2 @@
-window.socket = io.connect('http://localhost:3030');
+window.socket = io.connect(location.href);
 _.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
